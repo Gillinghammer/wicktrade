@@ -1,0 +1,44 @@
+# Wick Trading Strategy Configuration
+
+strategy:
+  min_trend_length: 5          # Minimum candles for valid trend
+  swing_lookback: 3            # scipy argrelextrema order parameter
+  wick_confirmation_ratio: 0.5 # Current wick >= 50% of avg_wick to confirm entry
+  initial_target_ratio: 1.0    # Exit 50% at avg_wick height
+  trailing_ratio: 0.8          # Trail stop at 80% of avg_wick
+  stop_loss_multiplier: 1.5    # Stop loss at 1.5x max_wick below entry
+
+risk:
+  max_position_pct: 5.0        # Max 5% of portfolio per position
+  risk_per_trade_pct: 1.0      # Risk 1% of portfolio per trade
+  max_daily_loss_pct: 2.0      # Stop trading after 2% daily loss
+  max_total_exposure_pct: 50.0 # Max 50% of portfolio invested at once
+
+backtest:
+  initial_capital: 100000
+  timeframes:
+    - "1Min"
+    - "5Min"
+    - "15Min"
+    - "30Min"
+    - "1Hour"
+    - "4Hour"
+    - "1Day"
+
+symbols:
+  # High-volume stocks good for wick trading
+  default:
+    - "SPY"
+    - "QQQ"
+    - "AAPL"
+    - "MSFT"
+    - "NVDA"
+    - "AMD"
+    - "TSLA"
+    - "META"
+    - "GOOGL"
+    - "AMZN"
+
+alpaca:
+  base_url: "https://paper-api.alpaca.markets"  # Paper trading
+  data_feed: "iex"  # Free tier uses IEX data

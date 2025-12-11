@@ -1,0 +1,78 @@
+# Paper Trading Configuration
+# Based on validation results from walk-forward and stress testing
+
+# Only ETH/USD 1Hour passed BOTH validation tests:
+# - Walk-forward: overfit ratio 0.81 (< 1.5), test PF 1.48
+# - Stress test: still profitable with costs (adjusted PF 1.06)
+
+validated_strategies:
+  - symbol: "ETH/USD"
+    timeframe: "1Hour"
+    params:
+      stop_loss_multiplier: 1.0
+      wick_confirmation_ratio: 0.5
+      trailing_ratio: 0.6
+      min_trend_length: 5
+    validation:
+      walk_forward_ratio: 0.81
+      test_profit_factor: 1.48
+      stress_test_pf: 1.06
+      passed_both: true
+
+# Configurations that passed ONE test but not both (USE WITH CAUTION):
+partial_validated:
+  - symbol: "NVDA"
+    timeframe: "1Hour"
+    params:
+      stop_loss_multiplier: 1.2
+      wick_confirmation_ratio: 0.5
+      trailing_ratio: 0.8
+      min_trend_length: 5
+    validation:
+      walk_forward_ratio: 1.79  # FAILED - overfitting
+      test_profit_factor: 1.02
+      stress_test_pf: 1.27  # PASSED
+      passed_both: false
+      reason: "Overfit ratio too high (>1.5)"
+
+  - symbol: "QQQ"
+    timeframe: "30Min"
+    params:
+      stop_loss_multiplier: 1.0
+      wick_confirmation_ratio: 0.5
+      trailing_ratio: 0.6
+      min_trend_length: 5
+    validation:
+      walk_forward_ratio: 0.55  # PASSED
+      test_profit_factor: 2.21
+      stress_test_pf: 0.76  # FAILED - not profitable with costs
+      passed_both: false
+      reason: "Not profitable after transaction costs"
+
+# Risk management limits
+risk_limits:
+  max_position_pct: 5.0       # Max 5% of portfolio in single position
+  max_daily_loss_pct: 2.0     # Stop trading if daily loss exceeds 2%
+  max_concurrent_positions: 1  # Only one position at a time
+  min_buying_power_pct: 20.0  # Maintain 20% buying power buffer
+
+# Trading schedule
+schedule:
+  # Crypto trades 24/7, stocks only during market hours
+  crypto_enabled: true
+  stocks_enabled: true
+  check_interval_seconds: 60
+
+# Monitoring and alerts
+monitoring:
+  log_file: "data/logs/paper_trades.csv"
+  performance_log: "data/logs/paper_trading.log"
+  alert_on_trade: false
+  alert_on_daily_loss_limit: true
+
+# Performance comparison thresholds
+# Flag if paper trading deviates significantly from backtest
+performance_thresholds:
+  max_pf_deviation: 0.5      # Alert if PF differs by > 0.5 from backtest
+  max_wr_deviation: 15.0     # Alert if win rate differs by > 15%
+  min_trades_for_comparison: 20  # Need 20 trades before comparing

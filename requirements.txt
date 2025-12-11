@@ -1,0 +1,10 @@
+# Core dependencies
+alpaca-py>=0.21.0
+pandas>=2.0.0
+numpy>=1.24.0
+python-dotenv>=1.0.0
+pytz>=2023.3
+pyarrow>=14.0.0
+
+# For optimization and analysis
+scipy>=1.11.0
