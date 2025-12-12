@@ -79,6 +79,7 @@ class WickStrategy(BaseStrategy):
         candles: List[Candle],
         current_idx: int,
         account: Account,
+        debug: bool = False,
     ) -> Optional[Signal]:
         """
         Check if entry conditions are met.
@@ -89,9 +90,13 @@ class WickStrategy(BaseStrategy):
         3. Current candle has confirming lower wick
         """
         if not self.is_active:
+            if debug:
+                logger.debug("REJECT: Strategy not active")
             return None
 
         if current_idx < self.config["min_trend_length"]:
+            if debug:
+                logger.debug(f"REJECT: Insufficient candles ({current_idx} < {self.config['min_trend_length']})")
             return None
 
         current_candle = self.get_current_candle(candles, current_idx)
@@ -99,6 +104,8 @@ class WickStrategy(BaseStrategy):
 
         # Check for already open position (handled by backtest engine)
         if account.positions:
+            if debug:
+                logger.debug("REJECT: Already have open position")
             return None
 
         # Detect active uptrend
@@ -109,15 +116,21 @@ class WickStrategy(BaseStrategy):
         )
 
         if trend is None:
+            if debug:
+                logger.debug("REJECT: No uptrend detected")
             return None
 
         if not trend.is_valid(self.config["min_trend_length"]):
+            if debug:
+                logger.debug(f"REJECT: Trend too short ({trend.length} candles)")
             return None
 
         # Calculate wick statistics
         wick_stats = self.wick_analyzer.analyze_trend_wicks(candles, trend)
 
         if not wick_stats.is_valid():
+            if debug:
+                logger.debug(f"REJECT: Invalid wick stats (avg={wick_stats.avg_wick:.4f})")
             return None
 
         # Check for wick confirmation on current candle
@@ -129,6 +142,10 @@ class WickStrategy(BaseStrategy):
         )
 
         if not is_confirmed:
+            if debug:
+                current_wick = current_candle.lower_wick_pct
+                required = wick_stats.avg_wick * self.config["wick_confirmation_ratio"]
+                logger.debug(f"REJECT: Wick not confirmed (current={current_wick:.4f}%, need>={required:.4f}%)")
             return None
 
         # Calculate entry targets

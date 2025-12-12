@@ -344,22 +344,49 @@ class TrendDetector:
         """
         Get the most recent active trend at a specific candle index.
 
+        A trend is considered "active" if:
+        1. It was detected in the data up to current_idx
+        2. It hasn't been invalidated by price action since the last swing point
+
         Args:
             candles: List of all candles
             current_idx: Current candle index
             trend_type: Type of trend to look for
 
         Returns:
-            Most recent TrendChannel that includes current_idx, or None
+            Most recent TrendChannel that is still active, or None
         """
         # Only analyze candles up to current index
         analysis_candles = candles[:current_idx + 1]
 
         trends = self.detect_trends(analysis_candles, trend_type)
 
-        # Find trend that includes current candle
+        if not trends:
+            return None
+
+        # Get the most recent trend (trends are already filtered for non-overlap)
+        # Check if it's still "active" - i.e., price hasn't broken the trend
         for trend in reversed(trends):  # Start from most recent
-            if trend.start_idx <= current_idx <= trend.end_idx:
+            # A trend is active if it ended recently (within lookback*2 candles)
+            # and price hasn't violated the trend structure since
+            candles_since_trend_end = current_idx - trend.end_idx
+
+            # Allow trends that ended within reasonable lookback window
+            # (swing detection needs lookback candles to confirm, so trend.end_idx
+            # will always be at least lookback candles behind current)
+            if candles_since_trend_end > self.lookback * 3:
+                continue  # Trend too old
+
+            # Check if trend is still intact by examining price action since trend end
+            trend_intact = True
+            for i in range(trend.end_idx + 1, current_idx + 1):
+                if not self.is_trend_intact(trend, candles[i], i):
+                    trend_intact = False
+                    break
+
+            if trend_intact:
+                # Extend trend end_idx to current for signaling purposes
+                trend.end_idx = current_idx
                 return trend
 
         return None

@@ -222,6 +222,24 @@ class SymbolTrader:
 
         account = self.broker.get_account()
 
+        # Check for uptrend first and log result
+        trend = self.strategy.trend_detector.get_active_trend(
+            candles, len(candles) - 1, "UPTREND"
+        )
+
+        current = candles[-1]
+        if trend:
+            wick_stats = self.strategy.wick_analyzer.analyze_trend_wicks(candles, trend)
+            self.logger.info(
+                f"TREND ACTIVE: {trend.length} candles, strength={trend.strength:.2f}, "
+                f"price=${current.close:.2f}, wick={current.lower_wick_pct:.3f}%"
+            )
+        else:
+            # Log why no trend
+            self.logger.info(
+                f"NO TREND: price=${current.close:.2f}, waiting for uptrend pattern"
+            )
+
         signal = self.strategy.should_enter(
             candles,
             current_idx=len(candles) - 1,
